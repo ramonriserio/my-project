@@ -14,7 +14,7 @@ jobs:
     uses: ./.github/workflows/terraform.yml
     with:
       environment: dev
-      aws-assume-role-arn: "arn:aws:iam::368453405930:role/github-actions-ramonriserio-pipeline"
+      aws-assume-role-arn: "arn:aws:iam::368453405930:role/projeto-node-ec2-vpc"
       aws-region: "us-east-1"
       aws-statefile-s3-bucket: "ramonriserio-us-east-1-terraform-statefile"
       aws-lock-dynamodb-table: "ramonriserio-us-east-1-terraform-lock"
