@@ -134,7 +134,7 @@ jobs:
         if: steps.read-destroy-config.outputs.destroy != 'true'
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ steps.ec2_ip.outputs.public_ip }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
