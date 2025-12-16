@@ -12,6 +12,8 @@ permissions:
 jobs:
   terraform:
     uses: ./.github/workflows/terraform.yml
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
     with:
       environment: dev
       aws-assume-role-arn: "arn:aws:iam::368453405930:role/projeto-node-ec2-vpc"
