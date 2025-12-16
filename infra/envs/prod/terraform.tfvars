@@ -1,1 +1,1 @@
-bucket_name="prod-us-east-1-projeto-node"
+vpc_name="prod-projeto-node-main"
