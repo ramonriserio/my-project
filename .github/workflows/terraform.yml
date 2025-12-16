@@ -103,6 +103,11 @@ jobs:
         if: steps.read-destroy-config.outputs.destroy != 'true'
         run: npm install
 
+      - name: Debug Docker Username
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: echo "Docker username: $DOCKER_USERNAME"
+
       - name: Build Docker image
         if: steps.read-destroy-config.outputs.destroy != 'true'
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest .
