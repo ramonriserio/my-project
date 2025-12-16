@@ -11,12 +11,15 @@ resource "aws_subnet" "subnet" {
   cidr_block              = cidrsubnet(aws_vpc.main.cidr_block, 8, 1)
   map_public_ip_on_launch = true
   availability_zone       = "us-east-1a"
+  tags = {
+    name = var.subnet_name
+  }
 }
 
 resource "aws_internet_gateway" "internet_gateway" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "internet_gateway"
+    Name = var.igw_name
   }
 }
 
@@ -26,6 +29,9 @@ resource "aws_route_table" "route_table" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.internet_gateway.id
   }
+  tags = {
+    name = var.route_table_name
+  }
 }
 
 resource "aws_route_table_association" "subnet_route" {
@@ -34,7 +40,7 @@ resource "aws_route_table_association" "subnet_route" {
 }
 
 resource "aws_security_group" "ec2_sg" {
-    name = "projeto-node-sg"
+    name = var.sg_name
     description = "Allow ingress traffic on ports 22 and 80"
 
     ingress {
@@ -52,7 +58,7 @@ resource "aws_security_group" "ec2_sg" {
     }
     
     tags = {
-        Name = "projeto-node"
+        Name = var.sg_name
     }
 }
 
@@ -63,6 +69,6 @@ resource "aws_instance" "state_ec2" {
     vpc_security_group_ids = [aws_security_group.ec2_sg.id]
     
     tags = {
-        Name = "projeto-node"
+        Name = var.instance_name
     }
 }
