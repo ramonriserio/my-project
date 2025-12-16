@@ -89,7 +89,7 @@ jobs:
       - name: Fetch Public IP
         if: steps.read-destroy-config.outputs.destroy != 'true'
         id: ec2_ip
-        run: |
+        run: cd infra &&
           PUBLIC_IP=$(terraform output -raw public_ip)
           echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
