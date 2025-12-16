@@ -5,6 +5,14 @@ on:
     secrets:
       DOCKER_USERNAME:
         required: true
+      DOCKER_PASSWORD:
+        required: true
+      EC2_HOST:
+        required: true
+      EC2_USER:
+        required: true
+      EC2_SSH_KEY:
+        required: true
     inputs:
       environment:
         type: string
