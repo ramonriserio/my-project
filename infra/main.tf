@@ -84,6 +84,7 @@ resource "aws_instance" "ec2" {
     instance_type = "t2.micro"
     key_name = "teste-key"
     vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+    subnet_id = aws_subnet.subnet.id
 
     user_data = <<-EOF
                 #!/bin/bash
