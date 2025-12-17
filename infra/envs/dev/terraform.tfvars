@@ -1,0 +1,6 @@
+vpc_name="dev-projeto-node-vpc"
+sg_name="dev-projeto-node-sg"
+instance_name="dev-projeto-node-ec2"
+subnet_name="dev-projeto-node-subnet"
+igw_name="dev-projeto-node-igw"
+route_table_name="dev-projeto-node-route_table"

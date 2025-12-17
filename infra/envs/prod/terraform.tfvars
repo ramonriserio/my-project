@@ -1,0 +1,6 @@
+vpc_name="prod-projeto-node-main"
+sg_name="prod-projeto-node-sg"
+instance_name="prod-projeto-node-ec2"
+subnet_name="prod-projeto-node-subnet"
+igw_name="prod-projeto-node-igw"
+route_table_name="prod-projeto-node-route_table"
