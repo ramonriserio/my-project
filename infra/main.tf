@@ -6,16 +6,6 @@ resource "aws_vpc" "main" {
   }
 }
 
-resource "aws_subnet" "subnet" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = cidrsubnet(aws_vpc.main.cidr_block, 8, 1)
-  map_public_ip_on_launch = true
-  availability_zone       = "us-east-1a"
-  tags = {
-    name = var.subnet_name
-  }
-}
-
 resource "aws_internet_gateway" "internet_gateway" {
   vpc_id = aws_vpc.main.id
   tags = {
@@ -32,11 +22,6 @@ resource "aws_route_table" "route_table" {
   tags = {
     name = var.route_table_name
   }
-}
-
-resource "aws_route_table_association" "subnet_route" {
-  subnet_id      = aws_subnet.subnet.id
-  route_table_id = aws_route_table.route_table.id
 }
 
 resource "aws_security_group" "ec2_sg" {
@@ -84,7 +69,6 @@ resource "aws_instance" "ec2" {
     instance_type = "t2.micro"
     key_name = "teste-key"
     vpc_security_group_ids = [aws_security_group.ec2_sg.id]
-    subnet_id = aws_subnet.subnet.id
 
     user_data = <<-EOF
                 #!/bin/bash
