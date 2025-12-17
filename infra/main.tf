@@ -67,6 +67,26 @@ resource "aws_instance" "ec2" {
     instance_type = "t2.micro"
     key_name = "teste-key"	# com a role isso é mesmo necesário ???
     vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+
+    user_data = <<-EOF
+                #!/bin/bash
+                
+                # Atualiza pacotes
+                apt-get update -y
+
+                # Instala dependências
+                apt-get install -y curl
+
+                # Instala Docker usando script oficial
+                curl -fsSL https://get.docker.com | bash
+
+                # Habilita e inicia o serviço
+                systemctl enable docker
+                systemctl start docker
+
+                # Adiciona o usuário padrão ao grupo docker
+                usermod -aG docker ubuntu
+                EOF
     
     tags = {
         Name = var.instance_name
