@@ -138,9 +138,6 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "===== CLOUD-INIT LOG ====="
-            cat /var/log/cloud-init-output.log
-
             echo "===== DOCKER DEPLOY ====="
             docker pull ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
             docker stop myapp || true && docker rm myapp || true
