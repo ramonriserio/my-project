@@ -13,7 +13,7 @@ on:
       - '.github/workflows/infra.yml'
 
   workflow_run:
-    workflows: ["Terraform Infra"]
+    workflows: ["Terraform Workflow"]
     types:
       - completed
     branches: [develop, main]
