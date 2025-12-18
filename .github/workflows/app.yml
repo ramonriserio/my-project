@@ -3,8 +3,8 @@ name: Docker Workflow
 on:
   push:
     branches:
-      - main
       - develop
+      - main
     paths:
       - 'src/**'
       - Dockerfile
