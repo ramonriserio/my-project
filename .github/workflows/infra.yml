@@ -2,9 +2,7 @@ name: Terraform Workflow
 
 on:
   push:
-    branches:
-      - main
-      - develop
+    branches: [develop, main]
     paths:
       - 'infra/**'
       - '.github/workflows/infra.yml'
@@ -76,17 +74,3 @@ jobs:
         run: |
           echo "⏳ Waiting 90s for instance and app startup..."
           sleep 90
-
-      - name: Fetch Public IP
-        if: steps.read-destroy-config.outputs.destroy != 'true'
-        id: ec2_ip
-        run: cd infra &&
-          PUBLIC_IP=$(terraform output -raw public_ip) &&
-          echo "$PUBLIC_IP" > public_ip.txt
-
-      - name: Upload Public IP Artifact      # Permitirá garantir que o Terraform Workflow seja sempre
-        uses: actions/upload-artifact@v4      # executado antes do Docker Workflow
-        with:
-          name: public_ip
-          path: infra/public_ip.txt                 # Esse arquivo foi criado no step Fetch Public IP e
-                                              # será baixado no Docker Workflow

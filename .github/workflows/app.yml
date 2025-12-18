@@ -6,15 +6,18 @@ on:
     paths:
       - 'src/**'
       - Dockerfile
-      - 'infra/**'   # Garante redeploy se infra mudar
+      - 'infra/**'    # Garante redeploy se infra mudar
       - '.github/workflows/app.yml'
+    paths-ignore:
+      - 'infra/**'    # Ignora se a infra mudou junto (deixa o workflow_run cuidar disso)
+      - '.github/workflows/infra.yml'
 
   workflow_run:
     workflows: ["Terraform Infra"]
     types:
       - completed
     branches: [develop, main]
-                
+
 permissions:
   contents: read
 
@@ -30,6 +33,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
       - name: Read destroy configuration
         id: read-destroy-config
         run: |
@@ -65,17 +69,45 @@ jobs:
       - name: ✅ Done
         run: echo "Image pushed to Docker Hub!"
 
-      - name: Download Public IP Artifact
-        uses: actions/download-artifact@v4
+      # Autenticar na AWS
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          name: public_ip
-          path: ./infra # baixa o artifact dentro da pasta infra
+          role-to-assume: arn:aws:iam::368453405930:role/projeto-node-ec2-vpc
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: us-east-1
 
-      - name: Read Public IP
-        id: read_ip
+      # Consultar a Infraestrutura (A Mágica acontece aqui)
+      - name: Get EC2 Public IP
+        id: get_ip
         run: |
-          PUBLIC_IP=$(cat ./infra/public_ip.txt)
-          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+          # Se estiver na branch main, busca dev-projeto-node-ec2, senão App-staging
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+             TARGET_NAME="prod-projeto-node-ec2"
+          else
+             TARGET_NAME="dev-projeto-node-ec2"
+          fi
+          echo "🔍 Buscando IP das instâncias..."
+          
+          # Comando AWS CLI para filtrar instâncias:
+          # - com respectivas tags
+          # - que estejam no estado 'running' (evita pegar máquina parada)
+          IP=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=$TARGET_NAME" \
+                      "Name=instance-state-name,Values=running" \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text)
+
+          # Validação de Segurança
+          if [ -z "$IP" ]; then
+            echo "❌ Erro: Nenhuma instância ativa encontrada com a tag 'correspondente."
+            exit 1
+          fi
+
+          echo "✅ IP Encontrado: $IP"
+          
+          # Exporta o IP para ser usado nos próximos steps
+          echo "public_ip=$IP" >> $GITHUB_OUTPUT
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.0
@@ -84,6 +116,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            echo "Conectado em: $(hostname -I)"
             echo "===== DOCKER DEPLOY ====="
             docker pull ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
             docker stop myapp || true && docker rm myapp || true
