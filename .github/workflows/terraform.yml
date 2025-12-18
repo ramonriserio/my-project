@@ -110,10 +110,6 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install dependencies
-        if: steps.read-destroy-config.outputs.destroy != 'true'
-        run: npm install
-
       - name: Build Docker image
         if: steps.read-destroy-config.outputs.destroy != 'true'
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest .
