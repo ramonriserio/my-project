@@ -5,7 +5,7 @@ FROM node:24.12-alpine
 WORKDIR /app
 
 # Copiando arquivos
-COPY scr/package.json ./
+COPY src/package.json ./
 RUN npm install
 COPY src/ .
 
