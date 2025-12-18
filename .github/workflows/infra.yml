@@ -88,5 +88,5 @@ jobs:
         uses: actions/upload-artifact@v4      # executado antes do Docker Workflow
         with:
           name: public_ip
-          path: public_ip.txt                 # Esse arquivo foi criado no step Fetch Public IP e
+          path: infra/public_ip.txt                 # Esse arquivo foi criado no step Fetch Public IP e
                                               # será baixado no Docker Workflow
