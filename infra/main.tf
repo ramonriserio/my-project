@@ -6,16 +6,6 @@ resource "aws_vpc" "main" {
   }
 }
 
-resource "aws_subnet" "subnet" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = cidrsubnet(aws_vpc.main.cidr_block, 8, 1)
-  map_public_ip_on_launch = true
-  availability_zone       = "us-east-1a"
-  tags = {
-    name = var.subnet_name
-  }
-}
-
 resource "aws_internet_gateway" "internet_gateway" {
   vpc_id = aws_vpc.main.id
   tags = {
@@ -34,19 +24,31 @@ resource "aws_route_table" "route_table" {
   }
 }
 
-resource "aws_route_table_association" "subnet_route" {
-  subnet_id      = aws_subnet.subnet.id
-  route_table_id = aws_route_table.route_table.id
-}
-
 resource "aws_security_group" "ec2_sg" {
     name = var.sg_name
     description = "Allow ingress traffic on ports 22 and 80"
 
     ingress {
-        from_port = 0
-        to_port = 0
-        protocol = "-1"
+        description = "SSH"
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTP"
+        from_port = 80
+        to_port = 80
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTPS"
+        from_port = 443
+        to_port = 443
+        protocol = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
 
