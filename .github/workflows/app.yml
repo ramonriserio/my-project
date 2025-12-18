@@ -13,8 +13,20 @@ permissions:
   contents: read
 
 jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    outputs:
+      destroy: ${{ steps.read-destroy-config.outputs.destroy }}
+    steps:
+      - name: Read destroy configuration
+        id: read-destroy-config
+        run: |
+          DESTROY="$(jq -r '.${{ github.ref_name }}' ./infra/destroy_config.json)"
+          echo "destroy=$DESTROY" >> $GITHUB_OUTPUT
   docker:
     runs-on: ubuntu-24.04
+    needs: destroy
+    if: ${{ needs.destroy.outputs.destroy != 'true' }}
     defaults:
       run:
         shell: bash

@@ -40,7 +40,6 @@ jobs:
         id: read-destroy-config
         run: |
           DESTROY="$(jq -r '.${{ github.ref_name }}' ./infra/destroy_config.json)"
-          echo "DESTROY = $DESTROY"
           echo "destroy=$(echo $DESTROY)" >> $GITHUB_OUTPUT
 
       - name: Terraform Init
@@ -83,7 +82,7 @@ jobs:
         id: ec2_ip
         run: cd infra &&
           PUBLIC_IP=$(terraform output -raw public_ip) &&
-          echo "PUBLIC_IP" > public_ip.txt
+          echo "$PUBLIC_IP" > public_ip.txt
 
       - name: Upload Public IP Artifact      # Permitirá garantir que o Terraform Workflow seja sempre
         uses: actions/upload-artifact@v4      # executado antes do Docker Workflow
