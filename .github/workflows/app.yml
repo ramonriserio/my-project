@@ -16,9 +16,6 @@ on:
     types:
       - completed
     branches: [develop, main]
-    paths-ignore:
-      - 'infra/**'    # Garante o redeploy no caso da infra mudar
-      - '.github/workflows/infra.yml'
 
 permissions:
   contents: read
