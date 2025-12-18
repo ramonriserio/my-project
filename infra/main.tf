@@ -24,7 +24,7 @@ resource "aws_route_table" "route_table" {
   }
 }
 
-resource "aws_security_group" "ec2_sg" {
+resource "aws_security_group" "ec2_sg2" {
     name = var.sg_name
     description = "Allow ingress traffic on ports 22 and 80"
 
@@ -68,7 +68,7 @@ resource "aws_instance" "ec2" {
     ami = "ami-0ecb62995f68bb549"	# Ubuntu Server 24.04 LTS
     instance_type = "t2.micro"
     key_name = "teste-key"
-    vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+    vpc_security_group_ids = [aws_security_group.ec2_sg2.id]
 
     user_data = <<-EOF
                 #!/bin/bash
