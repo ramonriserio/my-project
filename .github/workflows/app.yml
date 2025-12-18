@@ -9,6 +9,12 @@ on:
       - 'infra/**'   # Garante redeploy se infra mudar
       - '.github/workflows/app.yml'
 
+  workflow_run:
+    workflows: ["Terraform Infra"]
+    types:
+      - completed
+    branches: [develop, main]
+                
 permissions:
   contents: read
 
