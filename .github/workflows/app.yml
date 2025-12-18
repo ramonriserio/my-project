@@ -44,7 +44,7 @@ jobs:
       - name: Download Public IP Artifact
         uses: actions/download-artifact@v4
         with:
-          name: public-ip
+          name: public_ip
 
       - name: Read Public IP
         id: read_ip
