@@ -6,17 +6,16 @@ on:
     paths:
       - 'src/**'
       - Dockerfile
-      - 'infra/**'    # Garante redeploy se infra mudar
       - '.github/workflows/app.yml'
-    paths-ignore:
-      - 'infra/**'    # Ignora se a infra mudou junto (deixa o workflow_run cuidar disso)
-      - '.github/workflows/infra.yml'
 
   workflow_run:
     workflows: ["Terraform Workflow"]
     types:
       - completed
     branches: [develop, main]
+    paths-ignore:
+      - 'infra/**'    # Garante o redeploy no caso da infra mudar
+      - '.github/workflows/infra.yml'
 
 permissions:
   contents: read
