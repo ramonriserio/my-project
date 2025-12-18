@@ -5,9 +5,9 @@ FROM node:24.12-alpine
 WORKDIR /app
 
 # Copiando arquivos
-COPY package.json ./
+COPY scr/package.json ./
 RUN npm install
-COPY . .
+COPY src/ .
 
 # Informando que o container rodará na porta 3000
 EXPOSE 3000
