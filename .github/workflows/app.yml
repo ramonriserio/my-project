@@ -63,11 +63,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: public_ip
+          path: ./infra # baixa o artifact dentro da pasta infra
 
       - name: Read Public IP
         id: read_ip
         run: |
-          PUBLIC_IP=$(cat public_ip.txt)
+          PUBLIC_IP=$(cat ./infra/public_ip.txt)
           echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
       - name: Deploy to EC2 via SSH
