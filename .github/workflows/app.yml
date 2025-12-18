@@ -17,12 +17,19 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       destroy: ${{ steps.read-destroy-config.outputs.destroy }}
+    defaults:
+      run:
+        shell: bash
+
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
       - name: Read destroy configuration
         id: read-destroy-config
         run: |
           DESTROY=$(jq -r ".${GITHUB_REF_NAME}" ./infra/destroy_config.json)
           echo "destroy=$DESTROY" >> $GITHUB_OUTPUT
+  
   docker:
     runs-on: ubuntu-24.04
     needs: config
