@@ -7,7 +7,10 @@ on:
       - 'src/**'
       - Dockerfile
       - '.github/workflows/app.yml'
-
+    paths-ignore:
+      - 'infra/**'    # Garante o redeploy no caso da infra mudar
+      - '.github/workflows/infra.yml'
+      
   workflow_run:
     workflows: ["Terraform Workflow"]
     types:
