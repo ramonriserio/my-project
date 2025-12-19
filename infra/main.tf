@@ -64,6 +64,33 @@ resource "aws_security_group" "ec2_sg2" {
     }
 }
 
+# 1. Gerar a Chave Privada (Private Key)
+resource "tls_private_key" "private_key" {
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
+
+# 2. Criar o Certificado Autoassinado
+resource "tls_self_signed_cert" "self_signed" {
+  # Usa a chave gerada acima
+  private_key_pem = tls_private_key.private_key.private_key_pem
+
+  # Configurações do certificado
+  subject {
+    common_name  = "meu-app-interno.local"
+    organization = "Minha Empresa"
+  }
+
+  validity_period_hours = 8760 # Validade de 1 ano
+  
+  # Permissões do certificado (importante para funcionar como HTTPS)
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "server_auth",
+  ]
+}
+
 resource "aws_instance" "ec2" {
     ami = "ami-0ecb62995f68bb549"	# Ubuntu Server 24.04 LTS
     instance_type = "t2.micro"
@@ -88,6 +115,14 @@ resource "aws_instance" "ec2" {
 
                 # Adiciona o usuário padrão ao grupo docker
                 usermod -aG docker ubuntu
+
+                # Ir para pasta do usuário
+                cd /home/ec2-user
+
+                # Injetar os Certificados gerados pelo Terraform
+                echo "${tls_private_key.pk.private_key_pem}" > server.key
+                echo "${tls_self_signed_cert.cert.cert_pem}" > server.crt
+
                 EOF
     
     tags = {
