@@ -143,6 +143,15 @@ jobs:
           script: |
             echo "Conectado em: $(hostname -I)"
             echo "===== DOCKER DEPLOY ====="
-            docker pull ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
-            docker stop myapp || true && docker rm myapp || true
-            docker run -d --name myapp -p 80:3000 ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest    # Baixa a imagem atualizada
+            docker stop myapp || true && docker rm myapp || true                  # Remove container antigo se existir
+            docker run -d \
+              --name myapp \
+              --restart unless-stopped \
+              -p 80:3000 \
+              -p 443:443 \
+              -v /home/ubuntu/server.crt:/usr/src/app/certs/server.crt \
+              -v /home/ubuntu/server.key:/usr/src/app/certs/server.key \
+              -e SSL_KEY_PATH=/usr/src/app/certs/server.key \
+              -e SSL_CERT_PATH=/usr/src/app/certs/server.crt \
+              ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
