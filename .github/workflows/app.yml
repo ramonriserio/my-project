@@ -49,6 +49,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0    # O valor 0 baixa todo o histórico. 
+                            # Garante que o comparador de paths tenha a referência correta
 
       # --- LÓGICA ANTI-DUPLICIDADE ---
       # Verifica quais arquivos mudaram neste push
@@ -60,6 +63,7 @@ jobs:
           filters: |
             infra:
               - 'infra/**'
+              - '.github/workflows/infra.yml'
 
       # Se for PUSH e a INFRA mudou, paramos aqui.
       # Motivo: O workflow "Terraform Infra" já deve ter disparado. 
