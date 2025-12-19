@@ -36,6 +36,7 @@ jobs:
         id: read-destroy-config
         run: |
           DESTROY=$(jq -r ".${GITHUB_REF_NAME}" ./infra/destroy_config.json)
+          echo "destroy=$DESTROY"
           echo "destroy=$DESTROY" >> $GITHUB_OUTPUT
   
   docker:
