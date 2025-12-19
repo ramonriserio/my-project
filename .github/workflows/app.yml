@@ -16,6 +16,8 @@ on:
 
 permissions:
   contents: read
+  id-token: write # Necessário para AWS
+  actions: read   # Necessário para o filtro de paths
 
 jobs:
   config:
@@ -69,7 +71,7 @@ jobs:
           echo "Abortando este job para aguardar o término do workflow 'Terraform Infra'."
           echo "Este workflow será acionado automaticamente via 'workflow_run' em breve."
           exit 0 
-                  
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
