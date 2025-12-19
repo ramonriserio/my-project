@@ -1,0 +1,143 @@
+name: Docker Workflow
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'src/**'
+      - Dockerfile
+      - '.github/workflows/app.yml'
+      
+  workflow_run:
+    workflows: ["Terraform Workflow"]
+    types:
+      - completed
+    branches: [develop, main]
+
+permissions:
+  contents: read
+  id-token: write # Necessário para AWS
+  actions: read   # Necessário para o filtro de paths
+
+jobs:
+  config:
+    runs-on: ubuntu-24.04
+    outputs:
+      destroy: ${{ steps.read-destroy-config.outputs.destroy }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Read destroy configuration
+        id: read-destroy-config
+        run: |
+          DESTROY=$(jq -r ".${GITHUB_REF_NAME}" ./infra/destroy_config.json)
+          echo "destroy=$DESTROY" >> $GITHUB_OUTPUT
+  
+  docker:
+    runs-on: ubuntu-24.04
+    needs: config
+    if: ${{ needs.config.outputs.destroy != 'true' }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # --- LÓGICA ANTI-DUPLICIDADE ---
+      # Verifica quais arquivos mudaram neste push
+      - name: Check if Infra modified
+        if: github.event_name == 'push' # Só executa essa checagem se for push direto
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            infra:
+              - 'infra/**'
+
+      # Se for PUSH e a INFRA mudou, paramos aqui.
+      # Motivo: O workflow "Terraform Infra" já deve ter disparado. 
+      # Ele vai chamar este workflow de novo via 'workflow_run' quando acabar.
+      - name: Cancel if Infra changed (Defer to Workflow Run)
+        if: github.event_name == 'push' && steps.filter.outputs.infra == 'true'
+        run: |
+          echo "🛑 Infraestrutura detectada nas mudanças."
+          echo "Abortando este job para aguardar o término do workflow 'Terraform Infra'."
+          echo "Este workflow será acionado automaticamente via 'workflow_run' em breve."
+          exit 0 
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest .
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Push image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
+
+      - name: ✅ Done
+        run: echo "Image pushed to Docker Hub!"
+
+      # Autenticar na AWS
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::368453405930:role/projeto-node-ec2-vpc
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: us-east-1
+
+      # Consultar a Infraestrutura (A Mágica acontece aqui)
+      - name: Get EC2 Public IP
+        id: get_ip
+        run: |
+          # Se estiver na branch main, busca dev-projeto-node-ec2, senão App-staging
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+             TARGET_NAME="prod-projeto-node-ec2"
+          else
+             TARGET_NAME="dev-projeto-node-ec2"
+          fi
+          echo "🔍 Buscando IP das instâncias..."
+          
+          # Comando AWS CLI para filtrar instâncias:
+          # - com respectivas tags
+          # - que estejam no estado 'running' (evita pegar máquina parada)
+          IP=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=$TARGET_NAME" \
+                      "Name=instance-state-name,Values=running" \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text)
+
+          # Validação de Segurança
+          if [ -z "$IP" ]; then
+            echo "❌ Erro: Nenhuma instância ativa encontrada com a tag 'correspondente."
+            exit 1
+          fi
+
+          echo "✅ IP Encontrado: $IP"
+          
+          # Exporta o IP para ser usado nos próximos steps
+          echo "public_ip=$IP" >> $GITHUB_OUTPUT
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ steps.get_ip.outputs.public_ip}}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Conectado em: $(hostname -I)"
+            echo "===== DOCKER DEPLOY ====="
+            docker pull ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
+            docker stop myapp || true && docker rm myapp || true
+            docker run -d --name myapp -p 80:3000 ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
