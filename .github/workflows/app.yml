@@ -7,13 +7,26 @@ on:
       - 'src/**'
       - Dockerfile
       - '.github/workflows/app.yml'
-      
-  workflow_run:
-    workflows: ["Terraform Workflow"]
-    types:
-      - completed
-    branches: [develop, main]
 
+  # Isso permite que o workflow de Terraform chame este arquivo ao finalizar com sucesso
+  workflow_call:
+    inputs:
+      # Um flag para saber se devemos ignorar a checagem de infra (pois já veio do Terraform)
+      skip_infra_check:
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      # Precisamos declarar que este workflow aceita esses segredos
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+      EC2_USER:
+        required: true
+      EC2_SSH_KEY:
+        required: true
+        
 permissions:
   contents: read
   id-token: write # Necessário para AWS
@@ -55,9 +68,9 @@ jobs:
                             # Garante que o comparador de paths tenha a referência correta
 
       # --- LÓGICA ANTI-DUPLICIDADE ---
-      # Verifica quais arquivos mudaram neste push
+      # Passo 1: Verifica o que mudou (APENAS se for push direto, e não uma chamada via workflow_call)
       - name: Check if Infra modified
-        if: github.event_name == 'push' # Só executa essa checagem se for push direto
+        if: github.event_name == 'push' && inputs.skip_infra_check != true
         uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -66,16 +79,14 @@ jobs:
               - 'infra/**'
               - '.github/workflows/infra.yml'
 
-      # Se for PUSH e a INFRA mudou, paramos aqui.
-      # Motivo: O workflow "Terraform Infra" já deve ter disparado. 
-      # Ele vai chamar este workflow de novo via 'workflow_run' quando acabar.
-      - name: Cancel if Infra changed (Defer to Workflow Run)
+      # Passo 2: Se for PUSH e a INFRA mudou, paramos aqui.
+      - name: Cancel if Infra changed (Defer to Terraform Call)
         if: github.event_name == 'push' && steps.filter.outputs.infra == 'true'
         run: |
           echo "🛑 Infraestrutura detectada nas mudanças."
-          echo "Abortando este job para aguardar o término do workflow 'Terraform Infra'."
-          echo "Este workflow será acionado automaticamente via 'workflow_run' em breve."
-          exit 0 
+          echo "Abortando este job."
+          echo "Motivo: O workflow de Terraform deve estar rodando e irá CHAMAR este workflow (via workflow_call) assim que terminar."
+          exit 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -143,6 +154,15 @@ jobs:
           script: |
             echo "Conectado em: $(hostname -I)"
             echo "===== DOCKER DEPLOY ====="
-            docker pull ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
-            docker stop myapp || true && docker rm myapp || true
-            docker run -d --name myapp -p 80:3000 ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest    # Baixa a imagem atualizada
+            docker stop myapp || true && docker rm myapp || true                  # Remove container antigo se existir
+            docker run -d \
+              --name myapp \
+              --restart unless-stopped \
+              -p 80:3000 \
+              -p 443:443 \
+              -v /home/ubuntu/server.crt:/usr/src/app/certs/server.crt \
+              -v /home/ubuntu/server.key:/usr/src/app/certs/server.key \
+              -e SSL_KEY_PATH=/usr/src/app/certs/server.key \
+              -e SSL_CERT_PATH=/usr/src/app/certs/server.crt \
+              ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
