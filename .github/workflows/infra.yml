@@ -14,6 +14,9 @@ permissions:
 jobs:
   terraform:
     runs-on: ubuntu-24.04
+    # Expor o output para que o próximo job possa ler
+    outputs:
+      destroy: ${{ steps.read-destroy-config.outputs.destroy }}
     defaults:
       run:
         shell: bash
@@ -74,3 +77,13 @@ jobs:
         run: |
           echo "⏳ Waiting 90s for instance and app startup..."
           sleep 90
+
+  # Job que chama o Docker Workflow
+  call-docker-workflow:
+    needs: terraform      # Só roda se o terraform acabar com sucesso
+    # Só roda se NÃO foi um Destroy
+    if: needs.terraform.outputs.destroy != 'true' && needs.terraform.result == 'success'
+    uses: ./.github/workflows/app.yml     # Chama o arquivo do Docker workflow
+    with:
+      skip_infra_check: true    # Avisa o Docker para pular a checagem de infra
+    secrets: inherit            # Passa todos os secrets (AWS, DOCKER, SSH) automaticamente
