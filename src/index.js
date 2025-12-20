@@ -16,8 +16,8 @@ app.get('/status', (req, res) => {
 
 // Carregar os certificados (caminhos definidos no Terraform)
 const httpsOptions = {
-    key: fs.readFileSync('/home/ec2-user/server.key'),
-    cert: fs.readFileSync('/home/ec2-user/server.crt')
+    key: fs.readFileSync('/home/ubuntu/server.key'),
+    cert: fs.readFileSync('/home/ubuntu/server.crt')
 };
 
 // Iniciar o servidor HTTPS passando as opções e o app express
