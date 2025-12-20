@@ -10,27 +10,22 @@ on:
 
   # Isso permite que o workflow de Terraform chame este arquivo ao finalizar com sucesso
   workflow_call:
-  workflow_run:
-    workflows: ["Terraform Workflow"]
-    types:
-      - completed
-    branches: [develop, main]
-inputs:
-  # Um flag para saber se devemos ignorar a checagem de infra (pois já veio do Terraform)
-  skip_infra_check:
-    required: false
-    type: boolean
-    default: true
-secrets:
-  # Precisamos declarar que este workflow aceita esses segredos
-  DOCKER_USERNAME:
-    required: true
-  DOCKER_PASSWORD:
-    required: true
-  EC2_USER:
-    required: true
-  EC2_SSH_KEY:
-    required: true
+    inputs:
+      # Um flag para saber se devemos ignorar a checagem de infra (pois já veio do Terraform)
+      skip_infra_check:
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      # Precisamos declarar que este workflow aceita esses segredos
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+      EC2_USER:
+        required: true
+      EC2_SSH_KEY:
+        required: true
         
 permissions:
   contents: read
