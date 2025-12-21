@@ -109,6 +109,31 @@ resource "tls_self_signed_cert" "self_signed" {
   ]
 }
 
+# --- PERMISSÕES PARA OBSERVABILIDADE (CLOUDWATCH) ---
+resource "aws_iam_role" "ec2_role" {
+  name = "lacrei_ec2_observability_role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{ Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" } }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "logs_attach" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "lacrei_ec2_profile"
+  role = aws_iam_role.ec2_role.name
+}
+
+resource "aws_cloudwatch_log_group" "app_logs" {
+  name              = "/lacrei/app-logs"
+  retention_in_days = 7
+}
+# ----------------------------------------------------------------
+
 resource "aws_instance" "ec2" {
     ami = "ami-0ecb62995f68bb549"	# Ubuntu Server 24.04 LTS
     instance_type = "t2.micro"
@@ -117,6 +142,10 @@ resource "aws_instance" "ec2" {
     # CORREÇÃO: Especificar a subnet
     subnet_id              = aws_subnet.public_subnet.id
     vpc_security_group_ids = [aws_security_group.ec2_sg2.id]
+
+    # Associar perfil de IAM 
+    # Essa linha é o que conecta o seu servidor ao sistema de monitoramento sem precisar expor senhas.
+    iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
     user_data = <<-EOF
                 #!/bin/bash
@@ -146,7 +175,7 @@ resource "aws_instance" "ec2" {
 
                 # Ajusta permissões para o usuário ubuntu conseguir ler/editar se precisar
                 chown ubuntu:ubuntu server.key server.crt
-                chmod 600 server.key
+                chmod 644 server.key server.crt
 
                 EOF
     

@@ -156,13 +156,17 @@ jobs:
             echo "===== DOCKER DEPLOY ====="
             docker pull ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest    # Baixa a imagem atualizada
             docker stop myapp || true && docker rm myapp || true                  # Remove container antigo se existir
+
+            # PORTAS: 443 do host -> 3000 do container (SSL Nativo)
+            # LOGS: Driver awslogs configurado
             docker run -d \
               --name myapp \
               --restart unless-stopped \
-              -p 80:3000 \
-              -p 443:443 \
+              -p 443:3000 \
               -v /home/ubuntu/server.crt:/usr/src/app/certs/server.crt \
               -v /home/ubuntu/server.key:/usr/src/app/certs/server.key \
-              -e SSL_KEY_PATH=/usr/src/app/certs/server.key \
-              -e SSL_CERT_PATH=/usr/src/app/certs/server.crt \
+              --log-driver awslogs \
+              --log-opt awslogs-region=us-east-1 \
+              --log-opt awslogs-group=/lacrei/app-logs \
+              --log-opt awslogs-stream=app-instance-$(hostname) \
               ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
