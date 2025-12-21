@@ -61,7 +61,7 @@ resource "aws_iam_policy" "pipeline_permissions" {
         ]
       },
 
-      # EC2 e VPC (Networking e Computação) 
+      # EC2 e VPC (Networking e Computação)
       # Nota: EC2/VPC é difícil restringir recurso a recurso, pois criar uma VPC exige muitas ações.
       # Restringimos por Região e Ações.
       {
