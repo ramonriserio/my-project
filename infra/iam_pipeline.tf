@@ -35,7 +35,7 @@ resource "aws_iam_role" "github_actions_role" {
 
 # --- As Permissões Mínimas (Policy) ---
 resource "aws_iam_policy" "pipeline_permissions" {
-  name        = "github-actions-minimal-policy"
+  name        = "lacrei_github_actions_minimal_policy"
   description = "Permissões mínimas para o Terraform criar a infraestrutura"
 
   policy = jsonencode({
