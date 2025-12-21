@@ -2,7 +2,9 @@ const express = require('express'); // Importa o Express
 const https = require('https');     // Módulo HTTPS nativo
 const fs = require('fs');           // Módulo de Arquivos para ler os certificados
 const app = express();              // Cria uma instância do app
-const port = 443;                   // Define a porta do servidor
+
+// Porta alterada de 443 para 3000 para permitir execução non-root
+const port = 3000;                  // Define a porta do servidor
 
 // Rota GET /status
 app.get('/status', (req, res) => {
