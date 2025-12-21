@@ -8,7 +8,7 @@ variable "github_repo" {
 
 # --- Role de Deploy (Que o GitHub Actions assume) ---
 resource "aws_iam_role" "github_actions_role" {
-  name = "github-actions-deploy-role"
+  name = "lacrei_github_actions_deploy_role"
 
   # Trust Policy: Permite que o GitHub OIDC assuma esta role
   assume_role_policy = jsonencode({
