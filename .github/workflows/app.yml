@@ -168,6 +168,6 @@ jobs:
               -v /home/ubuntu/server.key:/usr/src/app/certs/server.key \
               --log-driver awslogs \
               --log-opt awslogs-region=us-east-1 \
-              --log-opt awslogs-group=/lacrei/app-logs-${{ github.ref_name }}
+              --log-opt awslogs-group=/lacrei/app-logs-${{ github.ref_name }} \
               --log-opt awslogs-stream=app-instance-$(hostname) \
               ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
