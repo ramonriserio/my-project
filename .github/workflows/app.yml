@@ -148,7 +148,7 @@ jobs:
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ steps.get_ip.outputs.public_ip}}
+          host: ${{ steps.get_ip.outputs.public_ip }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
@@ -171,3 +171,18 @@ jobs:
               --log-opt awslogs-group=/lacrei/app-logs-${{ github.ref_name }} \
               --log-opt awslogs-stream=app-instance-$(hostname) \
               ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest
+
+      - name: Smoke Test (Health Check)
+        # Só roda se o deploy SSH funcionou
+        if: success() 
+        run: |
+          echo "🔍 Verificando saúde da aplicação em https://${{ steps.get_ip.outputs.public_ip }}/status"
+          
+          # Tenta conectar 5 vezes, com intervalo de 10s entre tentativas
+          # -k: Ignora erro de certificado autoassinado
+          # -f: Falha o pipeline se o HTTP Code for erro (ex: 500, 404)
+          # --retry: Tenta de novo se falhar
+          curl -k -f --retry 5 --retry-delay 10 --connect-timeout 5 \
+          https://${{ steps.get_ip.outputs.public_ip }}/status
+
+          echo "✅ Aplicação respondeu com sucesso!"
