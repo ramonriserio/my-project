@@ -111,7 +111,7 @@ resource "tls_self_signed_cert" "self_signed" {
 
 # --- PERMISSÕES PARA OBSERVABILIDADE (CLOUDWATCH) ---
 resource "aws_iam_role" "ec2_role" {
-  name = "lacrei_ec2_observability_role"
+  name = "lacrei_ec2_observability_role_${terraform.workspace}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{ Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" } }]
@@ -124,13 +124,17 @@ resource "aws_iam_role_policy_attachment" "logs_attach" {
 }
 
 resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "lacrei_ec2_profile"
+  name = "lacrei_ec2_profile_${terraform.workspace}"
   role = aws_iam_role.ec2_role.name
 }
 
 resource "aws_cloudwatch_log_group" "app_logs" {
-  name              = "/lacrei/app-logs"
+  name = "/lacrei/app-logs-${terraform.workspace}"
   retention_in_days = 7
+
+  tags = {
+    Environment = terraform.workspace
+  }
 }
 # ----------------------------------------------------------------
 

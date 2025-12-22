@@ -153,6 +153,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "Conectado em: $(hostname -I)"
+            echo "Branch atual: ${{ github.ref_name }}"
             echo "===== DOCKER DEPLOY ====="
             docker pull ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest    # Baixa a imagem atualizada
             docker stop myapp || true && docker rm myapp || true                  # Remove container antigo se existir
@@ -167,6 +168,6 @@ jobs:
               -v /home/ubuntu/server.key:/usr/src/app/certs/server.key \
               --log-driver awslogs \
               --log-opt awslogs-region=us-east-1 \
-              --log-opt awslogs-group=/lacrei/app-logs \
+              --log-opt awslogs-group=/lacrei/app-logs-${{ github.ref_name }}
               --log-opt awslogs-stream=app-instance-$(hostname) \
               ${{ secrets.DOCKER_USERNAME }}/projeto-node-app:latest

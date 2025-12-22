@@ -8,7 +8,7 @@ variable "github_repo" {
 
 # --- Role de Deploy (Que o GitHub Actions assume) ---
 resource "aws_iam_role" "github_actions_role" {
-  name = "lacrei_github_actions_deploy_role"
+  name = "lacrei_github_actions_deploy_role_${terraform.workspace}"
 
   # Trust Policy: Permite que o GitHub OIDC assuma esta role
   assume_role_policy = jsonencode({
@@ -35,7 +35,7 @@ resource "aws_iam_role" "github_actions_role" {
 
 # --- As Permissões Mínimas (Policy) --- 
 resource "aws_iam_policy" "pipeline_permissions" {
-  name        = "lacrei_github_actions_minimal_policy"
+  name = "lacrei_github_actions_minimal_policy_${terraform.workspace}"
   description = "Permissões mínimas para o Terraform criar a infraestrutura"
 
   policy = jsonencode({
